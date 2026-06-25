@@ -30,3 +30,36 @@ WHERE email IS NOT NULL;
 CREATE UNIQUE INDEX idx_user_phone
 ON users(phone)
 WHERE phone IS NOT NULL;
+
+
+--ticket
+CREATE TYPE sport_type AS ENUM ('football','volleyball', 'basketball');
+
+CREATE TYPE seat_type AS ENUM (
+    'regular',
+    'special',
+    'vip'
+);
+
+CREATE TABLE tickets (
+     id BIGSERIAL NOT NULL PRIMARY KEY,
+	sport sport_type NOT NULL,
+	host_team VARCHAR(255) NOT NULL,
+     guest_team VARCHAR(255) NOT NULL,
+     match_date TIMESTAMP NOT NULL,
+	match_location VARCHAR(100) NOT NULL,
+     ticket_price NUMERIC(10,2) NOT NULL CHECK(ticket_price >= 0),
+     remaining_capacity INTEGER NOT NULL CHECK(remaining_capacity >= 0),
+     seat seat_type NOT NULL DEFAULT('regular'),
+
+
+     CONSTRAINT 
+     match_check CHECK (host_team <> guest_team)
+)
+
+--indexes
+CREATE INDEX idx_ticket_match_date
+ON tickets(match_date);
+
+CREATE INDEX idx_ticket_sport
+ON tickets(sport);
