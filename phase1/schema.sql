@@ -124,3 +124,38 @@ ON payments(reservation_id);
 
 CREATE INDEX idx_payment_status
 ON payments(payment_status);
+
+
+--Reports
+CREATE TYPE report_category AS ENUM (
+    'payment_issue',
+    'schedule_change',
+    'seat_issue',
+    'unexpected_cancellation',
+    'other'
+);
+
+CREATE TYPE report_status_enum AS ENUM (
+    'pending',
+    'reviewed'
+);
+
+CREATE TABLE reports (
+     id BIGSERIAL NOT NULL PRIMARY KEY,
+     user_id BIGINT NOT NULL REFERENCES users (id),
+     reservation_id BIGINT NOT NULL REFERENCES reservations (id),
+     category report_category NOT NULL,
+     report_description TEXT NOT NULL,
+     report_status report_status_enum NOT NULL DEFAULT('pending'),
+     created_at TIMESTAMP NOT NULL DEFAULT NOW()
+)
+
+--indexes
+CREATE INDEX idx_user_report
+ON reports(user_id);
+
+CREATE INDEX idx_report_status
+ON reports(report_status);
+
+CREATE INDEX idx_created
+ON reports(created_at);
