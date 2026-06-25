@@ -66,7 +66,7 @@ ON tickets(sport);
 
 
 --Reservations
-CREATE TYPE reservation_status AS ENUM (
+CREATE TYPE reservation_status_enum AS ENUM (
     'reserved',
     'paid',
     'cancelled'
@@ -76,7 +76,7 @@ CREATE TABLE reservations (
      user_id BIGINT NOT NULL REFERENCES users (id),
      ticket_id BIGINT NOT NULL REFERENCES tickets (id),
      reservation_time TIMESTAMP NOT NULL ,
-     reservation_status reservation_status NOT NULL DEFAULT ('reserved'),
+     reservation_status reservation_status_enum NOT NULL DEFAULT ('reserved'),
      expiration_time TIMESTAMP NOT NULL
 
      CONSTRAINT reservation_time_check
@@ -92,3 +92,35 @@ ON reservations(expiration_time);
 
 CREATE INDEX idx_reservation_status
 ON reservations(reservation_status);
+
+
+--Payment
+CREATE TYPE payment_method AS ENUM (
+    'card',
+    'wallet',
+    'crypto'
+);
+
+CREATE TYPE payment_status_enum AS ENUM (
+    'success',
+    'pending',
+    'failed'
+);
+
+CREATE TABLE payments (
+     id BIGSERIAL NOT NULL PRIMARY KEY,
+     user_id BIGINT NOT NULL REFERENCES users (id),
+     reservation_id BIGINT NOT NULL REFERENCES reservations (id),
+     amount NUMERIC(10,2) NOT NULL CHECK(amount >= 0),
+     method payment_method NOT NULL,
+     payment_status payment_status_enum NOT NULL DEFAULT ('pending'),
+     payment_time TIMESTAMP NOT NULL DEFAULT NOW()
+)  
+
+
+--indexes
+CREATE INDEX idx_reservation_id
+ON payments(reservation_id);
+
+CREATE INDEX idx_payment_status
+ON payments(payment_status);
