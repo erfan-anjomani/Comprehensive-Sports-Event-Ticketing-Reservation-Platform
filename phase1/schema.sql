@@ -63,3 +63,32 @@ ON tickets(match_date);
 
 CREATE INDEX idx_ticket_sport
 ON tickets(sport);
+
+
+--Reservations
+CREATE TYPE reservation_status AS ENUM (
+    'reserved',
+    'paid',
+    'cancelled'
+);
+CREATE TABLE reservations (
+     id BIGSERIAL NOT NULL PRIMARY KEY,
+     user_id BIGINT NOT NULL REFERENCES users (id),
+     ticket_id BIGINT NOT NULL REFERENCES tickets (id),
+     reservation_time TIMESTAMP NOT NULL ,
+     reservation_status reservation_status NOT NULL DEFAULT ('reserved'),
+     expiration_time TIMESTAMP NOT NULL
+
+     CONSTRAINT reservation_time_check
+     CHECK(expiration_time > reservation_time)
+)    
+
+--indexes
+CREATE INDEX idx_reservation_user
+ON reservations(user_id);
+
+CREATE INDEX idx_reservation_expiration
+ON reservations(expiration_time);
+
+CREATE INDEX idx_reservation_status
+ON reservations(reservation_status);
