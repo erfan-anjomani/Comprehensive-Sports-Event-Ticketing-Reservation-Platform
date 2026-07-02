@@ -21,3 +21,22 @@ VALUES
   ('Hasan',    'Rahimi',    'hasan@test.com',      '09120000013', 'spectator', 'Mashhad', 'hash', NOW(),                 'active'),
   ('Hadi',     'Rahmani',   'hadi@test.com',       '09120000014', 'spectator', 'Karaj',   'hash', NOW(),                 'active');
 
+-- tickets
+INSERT INTO tickets (sport, host_team, guest_team, match_date,
+                     match_location, ticket_price, remaining_capacity)
+VALUES
+  ('football',  'Real Madrid',          'Barcelona',      '2025-06-15 20:00:00', 'Madrid',        100.00, 100),
+  ('football',  'Manchester United',    'Liverpool',      '2025-06-16 18:00:00', 'Manchester',    120.00,  80),
+  ('football',  'AC Milan',             'Inter Milan',    '2025-06-17 21:00:00', 'Milan',          90.00, 150),
+  ('football',  'Bayern Munich',        'Dortmund',       CURRENT_DATE - INTERVAL '1 day' + TIME '18:00:00', 'Munich', 110.00, 200),
+  ('football',  'Persepolis',           'Esteghlal',      CURRENT_DATE - INTERVAL '1 day' + TIME '17:00:00', 'Tehran',  50.00, 200),
+  ('football',  'Paris Saint-Germain',  'Lyon',           '2025-07-05 20:00:00', 'Paris',          95.00, 150),
+  ('football',  'Karaj FC',             'Qom United',     '2025-07-10 19:00:00', 'Karaj',          60.00, 150),
+  ('volleyball','Iran',                 'Poland',         '2025-07-01 17:00:00', 'Tehran',         50.00, 200),
+  ('volleyball','Brazil',               'Italy',          '2025-07-02 20:00:00', 'Rio',            60.00, 180),
+  ('volleyball','USA',                  'France',         '2025-07-03 19:00:00', 'Paris',          70.00, 150),
+  ('volleyball','Shiraz Stars',         'Tabriz Titans',  '2025-07-15 18:00:00', 'Shiraz',         55.00, 150),
+  ('basketball','Los Angeles Lakers',   'Boston Celtics', '2025-06-20 19:00:00', 'Los Angeles',    80.00, 200),
+  ('basketball','Chicago Bulls',        'Miami Heat',     '2025-06-21 18:30:00', 'Chicago',        75.00, 180),
+  ('basketball','Golden State Warriors','Brooklyn Nets',  '2025-06-22 20:00:00', 'San Francisco',  90.00, 190);
+
