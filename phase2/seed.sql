@@ -227,3 +227,224 @@ VALUES
   ((SELECT id FROM users WHERE email='hadi@test.com'),
    (SELECT id FROM tickets WHERE host_team='Karaj FC' AND match_date='2025-07-10 19:00:00'),
    '2025-07-02 14:00:00', 'paid', '2025-07-02 14:10:00');
+
+
+-- payments
+INSERT INTO payments (user_id, reservation_id, amount, method, payment_status, payment_time)
+VALUES
+  -- Ali Ahmadi
+  ((SELECT id FROM users WHERE email='ali@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='ali@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00')
+        LIMIT 1),
+   100.00, 'card', 'success', '2025-06-10 12:05:00'),
+  ((SELECT id FROM users WHERE email='ali@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='ali@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Chicago Bulls' AND match_date='2025-06-21 18:30:00')
+        LIMIT 1),
+   75.00, 'wallet', 'success', '2025-06-19 15:05:00'),
+
+  -- Reza Hosseini
+  ((SELECT id FROM users WHERE email='reza@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='reza@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   80.00, 'card', 'success', (NOW() - INTERVAL '3 day') + INTERVAL '10 minutes'),
+  ((SELECT id FROM users WHERE email='reza@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='reza@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00')
+        LIMIT 1),
+   100.00, 'wallet', 'success', '2025-05-10 10:10:00'),
+  ((SELECT id FROM users WHERE email='reza@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='reza@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='AC Milan' AND match_date='2025-06-17 21:00:00')
+        LIMIT 1),
+   90.00, 'crypto', 'success', '2025-06-05 11:10:00'),
+  ((SELECT id FROM users WHERE email='reza@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='reza@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Paris Saint-Germain' AND match_date='2025-07-05 20:00:00')
+        LIMIT 1),
+   95.00, 'card', 'success', '2025-07-01 09:10:00'),
+
+  -- Neda Karimi
+  ((SELECT id FROM users WHERE email='neda@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='neda@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Manchester United' AND match_date='2025-06-16 18:00:00')
+        LIMIT 1),
+   120.00, 'card', 'success', '2025-06-01 14:05:00'),
+  ((SELECT id FROM users WHERE email='neda@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='neda@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Karaj FC' AND match_date='2025-07-10 19:00:00')
+        LIMIT 1),
+   60.00, 'wallet', 'success', '2025-07-05 16:05:00'),
+
+  -- Amir Rezaei
+  ((SELECT id FROM users WHERE email='amir@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='amir@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00')
+        LIMIT 1),
+   100.00, 'card', 'success', '2025-06-12 13:05:00'),
+  ((SELECT id FROM users WHERE email='amir@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='amir@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Iran' AND match_date='2025-07-01 17:00:00')
+        LIMIT 1),
+   50.00, 'wallet', 'success', '2025-06-20 14:05:00'),
+  ((SELECT id FROM users WHERE email='amir@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='amir@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        LIMIT 1),
+   80.00, 'crypto', 'success', '2025-06-18 11:05:00'),
+
+  -- Maryam Safari
+  ((SELECT id FROM users WHERE email='maryam@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='maryam@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Shiraz Stars' AND match_date='2025-07-15 18:00:00')
+        LIMIT 1),
+   55.00, 'card', 'success', '2025-07-05 10:05:00'),
+  ((SELECT id FROM users WHERE email='maryam@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='maryam@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Iran' AND match_date='2025-07-01 17:00:00')
+        LIMIT 1),
+   50.00, 'wallet', 'success', '2025-06-25 12:05:00'),
+
+  -- Pouya Norouzi
+  ((SELECT id FROM users WHERE email='pouya@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='pouya@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   80.00, 'card', 'success', (NOW() - INTERVAL '5 day') + INTERVAL '10 minutes'),
+  ((SELECT id FROM users WHERE email='pouya@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='pouya@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Chicago Bulls' AND match_date='2025-06-21 18:30:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   75.00, 'wallet', 'success', (NOW() - INTERVAL '3 day') + INTERVAL '10 minutes'),
+  ((SELECT id FROM users WHERE email='pouya@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='pouya@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00')
+        LIMIT 1),
+   100.00, 'crypto', 'success', '2025-06-05 09:05:00'),
+  ((SELECT id FROM users WHERE email='pouya@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='pouya@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Brazil' AND match_date='2025-07-02 20:00:00')
+        LIMIT 1),
+   60.00, 'card', 'success', '2025-07-01 10:05:00'),
+
+  -- Zahra Ebrahimi
+  ((SELECT id FROM users WHERE email='zahra@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='zahra@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   80.00, 'crypto', 'success', (NOW() - INTERVAL '2 day') + INTERVAL '10 minutes'),
+  ((SELECT id FROM users WHERE email='zahra@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='zahra@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Chicago Bulls' AND match_date='2025-06-21 18:30:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   75.00, 'wallet', 'success', (NOW() - INTERVAL '4 day') + INTERVAL '10 minutes'),
+  ((SELECT id FROM users WHERE email='zahra@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='zahra@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Golden State Warriors' AND match_date='2025-06-22 20:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   90.00, 'card', 'success', (NOW() - INTERVAL '6 day') + INTERVAL '10 minutes'),
+  ((SELECT id FROM users WHERE email='zahra@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='zahra@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='AC Milan' AND match_date='2025-06-17 21:00:00')
+        LIMIT 1),
+   90.00, 'card', 'success', '2025-06-10 10:05:00'),
+  ((SELECT id FROM users WHERE email='zahra@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='zahra@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Persepolis' AND match_date=CURRENT_DATE - INTERVAL '1 day' + TIME '17:00:00')
+        LIMIT 1),
+   50.00, 'wallet', 'success', '2025-06-25 16:05:00'),
+
+  -- Support1 (paid reservation only)
+  ((SELECT id FROM users WHERE email='support1@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='support1@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        AND reservation_status='paid' LIMIT 1),
+   80.00, 'card', 'success', '2025-06-01 12:05:00'),
+
+  -- Support2 (paid reservation only)
+  ((SELECT id FROM users WHERE email='support2@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='support2@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   75.00, 'wallet', 'success', '2025-06-02 15:05:00'),
+
+  -- John Smith (paid reservation only)
+  ((SELECT id FROM users WHERE email='usercancel@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='usercancel@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   90.00, 'card', 'success', '2025-06-25 17:05:00'),
+
+  -- Extra1 (today's paid purchase)
+  ((SELECT id FROM users WHERE email='extra1@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='extra1@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   50.00, 'wallet', 'success', CURRENT_DATE + TIME '10:05:00'),
+
+  -- Hasan (latest purchase)
+  ((SELECT id FROM users WHERE email='hasan@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='hasan@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   90.00, 'crypto', 'success', NOW() + INTERVAL '5 minutes'),
+
+  -- Hadi
+  ((SELECT id FROM users WHERE email='hadi@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='hadi@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   60.00, 'card', 'success', '2025-07-02 14:05:00');
+
+-- reports
+INSERT INTO reports (user_id, reservation_id, category, report_description, report_status, created_at)
+VALUES
+  ((SELECT id FROM users WHERE email='ali@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='ali@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00')
+        LIMIT 1),
+   'payment_issue', 'Card was charged twice.', 'pending', NOW() - INTERVAL '10 day'),
+  ((SELECT id FROM users WHERE email='neda@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='neda@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Manchester United' AND match_date='2025-06-16 18:00:00')
+        LIMIT 1),
+   'schedule_change', 'Match date changed unexpectedly.', 'pending', NOW() - INTERVAL '9 day'),
+  ((SELECT id FROM users WHERE email='amir@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='amir@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00')
+        LIMIT 1),
+   'seat_issue', 'Seat was already occupied.', 'pending', NOW() - INTERVAL '8 day'),
+  ((SELECT id FROM users WHERE email='pouya@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='pouya@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   'payment_issue', 'Payment status unclear.', 'pending', NOW() - INTERVAL '7 day'),
+  ((SELECT id FROM users WHERE email='zahra@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='zahra@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   'schedule_change', 'Match time was moved earlier.', 'pending', NOW() - INTERVAL '6 day'),
+  ((SELECT id FROM users WHERE email='support1@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='support1@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        AND reservation_status='paid' LIMIT 1),
+   'seat_issue', 'Seat row mismatch.', 'pending', NOW() - INTERVAL '5 day'),
+  ((SELECT id FROM users WHERE email='usercancel@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='usercancel@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   'unexpected_cancellation', 'The match was cancelled last minute.', 'pending', NOW() - INTERVAL '4 day'),
+  ((SELECT id FROM users WHERE email='maryam@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='maryam@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Shiraz Stars' AND match_date='2025-07-15 18:00:00')
+        LIMIT 1),
+   'other', 'Great experience overall.', 'pending', NOW() - INTERVAL '3 day'),
+  ((SELECT id FROM users WHERE email='hasan@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='hasan@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   'payment_issue', 'Delay in payment processing.', 'pending', NOW() - INTERVAL '2 day'),
+  ((SELECT id FROM users WHERE email='extra1@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='extra1@test.com')
+        AND reservation_status='paid' LIMIT 1),
+   'seat_issue', 'Seat obstructed view.', 'pending', NOW() - INTERVAL '1 day'),
+  ((SELECT id FROM users WHERE email='reza@test.com'),
+   (SELECT id FROM reservations WHERE user_id=(SELECT id FROM users WHERE email='reza@test.com')
+        AND ticket_id=(SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00')
+        ORDER BY reservation_time DESC LIMIT 1),
+   'other', 'Amazing atmosphere.', 'pending', NOW());
