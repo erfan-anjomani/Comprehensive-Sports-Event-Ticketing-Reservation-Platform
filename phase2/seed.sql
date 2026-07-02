@@ -40,3 +40,46 @@ VALUES
   ('basketball','Chicago Bulls',        'Miami Heat',     '2025-06-21 18:30:00', 'Chicago',        75.00, 180),
   ('basketball','Golden State Warriors','Brooklyn Nets',  '2025-06-22 20:00:00', 'San Francisco',  90.00, 190);
 
+
+-- football_details
+INSERT INTO football_details (ticket_id, league_name, stadium_name,
+                              row_number, seat_number, ticket_category, facilities)
+VALUES
+  ((SELECT id FROM tickets WHERE host_team='Real Madrid' AND match_date='2025-06-15 20:00:00'),
+   'La Liga', 'Santiago Bernabéu', 1, 10, 'vip',     'Parking, Catering'),
+  ((SELECT id FROM tickets WHERE host_team='Manchester United' AND match_date='2025-06-16 18:00:00'),
+   'Premier League', 'Old Trafford', 2, 20, 'special', 'VIP lounge'),
+  ((SELECT id FROM tickets WHERE host_team='AC Milan' AND match_date='2025-06-17 21:00:00'),
+   'Serie A', 'San Siro', 1, 15, 'regular', 'Snacks'),
+  ((SELECT id FROM tickets WHERE host_team='Bayern Munich' AND match_date=CURRENT_DATE - INTERVAL '1 day' + TIME '18:00:00'),
+   'Bundesliga', 'Allianz Arena', 3, 25, 'special', 'Covered seating'),
+  ((SELECT id FROM tickets WHERE host_team='Persepolis' AND match_date=CURRENT_DATE - INTERVAL '1 day' + TIME '17:00:00'),
+   'Persian Gulf Pro League', 'Azadi', 4, 30, 'vip', 'Premium parking'),
+  ((SELECT id FROM tickets WHERE host_team='Paris Saint-Germain' AND match_date='2025-07-05 20:00:00'),
+   'Ligue 1', 'Parc des Princes', 2, 18, 'vip', 'VIP lounge'),
+  ((SELECT id FROM tickets WHERE host_team='Karaj FC' AND match_date='2025-07-10 19:00:00'),
+   'Friendly Cup', 'Karaj Stadium', 5, 35, 'regular', 'Family friendly');
+
+-- volleyball_details
+INSERT INTO volleyball_details (ticket_id, league_name, arena_name,
+                                row_number, seat_number, ticket_category, facilities)
+VALUES
+  ((SELECT id FROM tickets WHERE host_team='Iran' AND match_date='2025-07-01 17:00:00'),
+   'Volleyball Nations League', 'Azadi Arena', 1, 5, 'regular', 'Courtside'),
+  ((SELECT id FROM tickets WHERE host_team='Brazil' AND match_date='2025-07-02 20:00:00'),
+   'FIVB World League', 'Maracanãzinho', 2, 10, 'special', 'VIP Access'),
+  ((SELECT id FROM tickets WHERE host_team='USA' AND match_date='2025-07-03 19:00:00'),
+   'International Friendly', 'Paris Arena', 3, 15, 'vip', 'Exclusive lounge'),
+  ((SELECT id FROM tickets WHERE host_team='Shiraz Stars' AND match_date='2025-07-15 18:00:00'),
+   'Iran Volleyball Cup', 'Shiraz Arena', 1, 12, 'regular', 'Parking, Snacks');
+
+-- basketball_details
+INSERT INTO basketball_details (ticket_id, league_name, arena_name,
+                                row_number, seat_number, ticket_category, facilities)
+VALUES
+  ((SELECT id FROM tickets WHERE host_team='Los Angeles Lakers' AND match_date='2025-06-20 19:00:00'),
+   'NBA', 'Staples Center', 1, 1, 'vip', 'VIP lounge, Parking'),
+  ((SELECT id FROM tickets WHERE host_team='Chicago Bulls' AND match_date='2025-06-21 18:30:00'),
+   'NBA', 'United Center', 2, 2, 'special', 'Food service'),
+  ((SELECT id FROM tickets WHERE host_team='Golden State Warriors' AND match_date='2025-06-22 20:00:00'),
+   'NBA', 'Chase Center', 3, 3, 'regular', 'Fan gifts');
