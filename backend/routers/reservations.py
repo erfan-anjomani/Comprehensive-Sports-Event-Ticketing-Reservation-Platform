@@ -89,3 +89,103 @@ def get_reservations_history(user: dict = Depends(get_current_user), conn=Depend
         return cursor.fetchall()
     finally:
         cursor.close()
+
+
+class PaymentRequest(BaseModel):
+    reservation_id: int
+    amount: float
+    method: str
+
+class ReportRequest(BaseModel):
+    category: str
+    description: str
+
+@router.post("/payments")
+def process_payment(req: PaymentRequest, user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cursor.execute("SELECT reservation_status FROM reservations WHERE id = %s AND user_id = %s", (req.reservation_id, user['id']))
+        res = cursor.fetchone()
+
+        if not res or res['reservation_status'] != 'reserved':
+            raise HTTPException(status_code=400, detail="The reservation is invalid or expired.")
+
+        cursor.execute("""
+            INSERT INTO payments (user_id, reservation_id, amount, method, payment_status)
+            VALUES (%s, %s, %s, %s, 'success')
+        """, (user['id'], req.reservation_id, req.amount, req.method))
+
+        cursor.execute("UPDATE reservations SET reservation_status = 'paid' WHERE id = %s", (req.reservation_id,))
+        conn.commit()
+        return {"message": "Payment was successful"}
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+
+@router.get("/reservations/{reservation_id}/penalty")
+def calculate_penalty(reservation_id: int, user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cursor.execute("""
+            SELECT r.reservation_status, t.match_date, t.ticket_price 
+            FROM reservations r
+            JOIN tickets t ON r.ticket_id = t.id
+            WHERE r.id = %s AND r.user_id = %s
+        """, (reservation_id, user['id']))
+        data = cursor.fetchone()
+
+        if not data or data['reservation_status'] != 'paid':
+            raise HTTPException(status_code=400, detail="This reservation cannot be canceled.")
+
+        import datetime
+        time_diff = data['match_date'] - datetime.datetime.now()
+
+        penalty_percent = 20 if time_diff.total_seconds() < 86400 else 0  
+        refund_amount = float(data['ticket_price']) * ((100 - penalty_percent) / 100)
+
+        return {"penalty_percent": penalty_percent, "refund_amount": refund_amount}
+    finally:
+        cursor.close()
+
+@router.post("/reservations/{reservation_id}/cancel")
+def cancel_reservation(reservation_id: int, user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cursor.execute("UPDATE reservations SET reservation_status = 'cancelled' WHERE id = %s AND user_id = %s RETURNING ticket_id", (reservation_id, user['id']))
+        res = cursor.fetchone()
+        if not res:
+            raise HTTPException(status_code=400, detail="Error in cancel operation")
+
+        cursor.execute("UPDATE tickets SET remaining_capacity = remaining_capacity + 1 WHERE id = %s", (res['ticket_id'],))
+        conn.commit()
+        return {"message": "Ticket successfully cancelled and refund"}
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+
+@router.post("/tickets/{ticket_id}/report")
+def submit_report(ticket_id: int, req: ReportRequest, user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM reservations WHERE user_id = %s AND ticket_id = %s ORDER BY id DESC LIMIT 1", (user['id'], ticket_id))
+        res = cursor.f
+
+etchone()
+        if not res:
+            raise HTTPException(status_code=400, detail="You have not purchased this ticket.")
+
+        cursor.execute("""
+            INSERT INTO reports (user_id, reservation_id, category, report_description)
+            VALUES (%s, %s, %s, %s)
+        """, (user['id'], res[0], req.category, req.description))
+        conn.commit()
+        return {"message": "Report syccessfully submitted."}
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
