@@ -11,8 +11,16 @@ class ReserveRequest(BaseModel):
     ticket_id: int
     quantity: int
 
+class PaymentRequest(BaseModel):
+    reservation_id: int
+    amount: float
+    method: str
+
+class ReportRequest(BaseModel):
+    category: str
+    description: str
+
 def auto_cancel_job(reservation_ids: list):
-    
     time.sleep(600)  # wait for 10 min
     conn = db_pool.getconn()
     try:
@@ -90,16 +98,6 @@ def get_reservations_history(user: dict = Depends(get_current_user), conn=Depend
     finally:
         cursor.close()
 
-
-class PaymentRequest(BaseModel):
-    reservation_id: int
-    amount: float
-    method: str
-
-class ReportRequest(BaseModel):
-    category: str
-    description: str
-
 @router.post("/payments")
 def process_payment(req: PaymentRequest, user: dict = Depends(get_current_user), conn=Depends(get_db)):
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -160,7 +158,7 @@ def cancel_reservation(reservation_id: int, user: dict = Depends(get_current_use
 
         cursor.execute("UPDATE tickets SET remaining_capacity = remaining_capacity + 1 WHERE id = %s", (res['ticket_id'],))
         conn.commit()
-        return {"message": "Ticket successfully cancelled and refund"}
+        return {"message": "Ticket successfully cancelled and refund processed"}
     except Exception as e:
         conn.rollback()
         raise e
@@ -172,9 +170,7 @@ def submit_report(ticket_id: int, req: ReportRequest, user: dict = Depends(get_c
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT id FROM reservations WHERE user_id = %s AND ticket_id = %s ORDER BY id DESC LIMIT 1", (user['id'], ticket_id))
-        res = cursor.f
-
-etchone()
+        res = cursor.fetchone()
         if not res:
             raise HTTPException(status_code=400, detail="You have not purchased this ticket.")
 
@@ -183,7 +179,7 @@ etchone()
             VALUES (%s, %s, %s, %s)
         """, (user['id'], res[0], req.category, req.description))
         conn.commit()
-        return {"message": "Report syccessfully submitted."}
+        return {"message": "Report successfully submitted."}
     except Exception as e:
         conn.rollback()
         raise e

@@ -17,7 +17,6 @@ def get_venues(conn=Depends(get_db)):
         
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-       
         cursor.execute("""
             SELECT DISTINCT t.match_location AS city,
             COALESCE(fd.stadium_name, vd.arena_name, bd.arena_name) AS venue
@@ -30,12 +29,11 @@ def get_venues(conn=Depends(get_db)):
         venues = cursor.fetchall()
         
         redis_client.setex(redis_key, 3600, json.dumps(jsonable_encoder(venues)))
-        
         return venues
     finally:
         cursor.close()
 
-        @router.get("/tickets/search")
+@router.get("/tickets/search")
 def search_tickets(
     request: Request,
     sport: Optional[str] = None,
@@ -51,7 +49,6 @@ def search_tickets(
     sort_by: Optional[str] = "date",
     conn=Depends(get_db)
 ):
-
     query_string = request.url.query
     redis_key = f"search:{query_string}" if query_string else "search:all"
     
@@ -61,7 +58,6 @@ def search_tickets(
 
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-
         sql = """
             SELECT t.id, t.sport, t.host_team, t.guest_team, t.match_date, 
                    t.match_location, t.ticket_price, t.remaining_capacity,
@@ -114,14 +110,12 @@ def search_tickets(
         cursor.execute(sql, tuple(params))
         results = cursor.fetchall()
 
- 
         redis_client.setex(redis_key, 300, json.dumps(jsonable_encoder(results)))
         return results
     finally:
         cursor.close()
 
-
-        @router.get("/tickets/{ticket_id}")
+@router.get("/tickets/{ticket_id}")
 def get_ticket_details(ticket_id: int, conn=Depends(get_db)):
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:

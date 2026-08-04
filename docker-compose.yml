@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: sport_ticketing
+      POSTGRES_USER: sport_admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      # اجرای فایل‌های SQL به ترتیب شماره‌گذاری شده در زمان ساخت اولیه دیتابیس
+      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./procedures.sql:/docker-entrypoint-initdb.d/2-procedures.sql
+      - ./seed.sql:/docker-entrypoint-initdb.d/3-seed.sql
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
