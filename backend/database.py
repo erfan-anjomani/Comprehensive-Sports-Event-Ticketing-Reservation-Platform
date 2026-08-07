@@ -4,14 +4,15 @@ from psycopg2.extras import RealDictCursor
 import redis
 import config
 from elasticsearch import Elasticsearch
-
+db_pool = None
 try:
     db_pool = psycopg2.pool.SimpleConnectionPool(
         1, 20,
         host=config.DB_HOST,
         database=config.DB_NAME,
         user=config.DB_USER,
-        password=config.DB_PASS
+        password=config.DB_PASS,
+        port=config.DB_PORT
     )
 except Exception as e:
     print("Database connection failed:", e)

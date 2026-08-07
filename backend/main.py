@@ -17,11 +17,19 @@ app.add_middleware(
 
 @app.on_event("startup")
 def sync_elasticsearch():
+    conn = None
+    cursor = None
+    
     try:
         if not es_client.ping():
             print("--- ElasticSearch is NOT connected ---")
             return
             
+      
+        if db_pool is None:
+            print("--- Database pool is not initialized ---")
+            return
+
         conn = db_pool.getconn()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
@@ -45,8 +53,11 @@ def sync_elasticsearch():
     except Exception as e:
         print(f"--- ElasticSearch Sync Error: {e} ---")
     finally:
-        cursor.close()
-        db_pool.putconn(conn)
+
+        if cursor is not None:
+            cursor.close()
+        if conn is not None and db_pool is not None:
+            db_pool.putconn(conn)
 
 app.include_router(auth.router)
 app.include_router(users.router)

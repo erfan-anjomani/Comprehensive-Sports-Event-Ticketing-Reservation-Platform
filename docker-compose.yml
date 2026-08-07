@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: sport_admin
       POSTGRES_PASSWORD: admin
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       # اجرای فایل‌های SQL به ترتیب شماره‌گذاری شده در زمان ساخت اولیه دیتابیس
       - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
