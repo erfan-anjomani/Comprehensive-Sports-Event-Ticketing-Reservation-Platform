@@ -4,6 +4,7 @@ from typing import Optional
 from database import get_db, redis_client
 import json
 import psycopg2.extras
+from database import es_client
 
 router = APIRouter(prefix="/api", tags=["Tickets and Venues"])
 
@@ -38,12 +39,7 @@ def search_tickets(
     request: Request,
     sport: Optional[str] = None,
     home_team: Optional[str] = None,
-    away_team: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
     city: Optional[str] = None,
-    venue: Optional[str] = None,
-    category: Optional[str] = None,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     sort_by: Optional[str] = "date",
@@ -56,6 +52,37 @@ def search_tickets(
     if cached_search:
         return json.loads(cached_search)
 
+   
+    try:
+        if es_client.ping():
+            must_queries = []
+            if sport: must_queries.append({"match": {"sport": sport}})
+            if home_team: must_queries.append({"match": {"host_team": home_team}})
+            if city: must_queries.append({"match": {"match_location": city}})
+            
+            range_query = {}
+            if min_price is not None: range_query["gte"] = min_price
+            if max_price is not None: range_query["lte"] = max_price
+            if range_query:
+                must_queries.append({"range": {"ticket_price": range_query}})
+
+            sort_query = [{"ticket_price": "asc"}] if sort_by == "price" else [{"match_date": "asc"}]
+
+            es_query = {
+                "query": {"bool": {"must": must_queries}} if must_queries else {"match_all": {}},
+                "sort": sort_query,
+                "size": 50
+            }
+            
+            res = es_client.search(index="tickets", body=es_query)
+            es_results = [hit["_source"] for hit in res["hits"]["hits"]]
+            
+            redis_client.setex(redis_key, 300, json.dumps(es_results))
+            return es_results
+    except Exception as e:
+        print(f"ES Search Failed, falling back to SQL: {e}")
+
+    # 2. Fallback به SQL در صورت قطعی الستیک‌سرچ
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         sql = """
@@ -70,46 +97,16 @@ def search_tickets(
             WHERE 1=1
         """
         params = []
+        if sport: sql += " AND t.sport = %s"; params.append(sport)
+        if home_team: sql += " AND t.host_team ILIKE %s"; params.append(f"%{home_team}%")
+        if city: sql += " AND t.match_location ILIKE %s"; params.append(f"%{city}%")
+        if min_price: sql += " AND t.ticket_price >= %s"; params.append(min_price)
+        if max_price: sql += " AND t.ticket_price <= %s"; params.append(max_price)
 
-        if sport:
-            sql += " AND t.sport = %s"
-            params.append(sport)
-        if home_team:
-            sql += " AND t.host_team ILIKE %s"
-            params.append(f"%{home_team}%")
-        if away_team:
-            sql += " AND t.guest_team ILIKE %s"
-            params.append(f"%{away_team}%")
-        if date_from:
-            sql += " AND t.match_date >= %s"
-            params.append(date_from)
-        if date_to:
-            sql += " AND t.match_date <= %s"
-            params.append(date_to)
-        if city:
-            sql += " AND t.match_location ILIKE %s"
-            params.append(f"%{city}%")
-        if venue:
-            sql += " AND COALESCE(fd.stadium_name, vd.arena_name, bd.arena_name) ILIKE %s"
-            params.append(f"%{venue}%")
-        if category:
-            sql += " AND COALESCE(fd.ticket_category, vd.ticket_category, bd.ticket_category) = %s"
-            params.append(category)
-        if min_price:
-            sql += " AND t.ticket_price >= %s"
-            params.append(min_price)
-        if max_price:
-            sql += " AND t.ticket_price <= %s"
-            params.append(max_price)
-
-        if sort_by == "price":
-            sql += " ORDER BY t.ticket_price ASC"
-        else:
-            sql += " ORDER BY t.match_date ASC"
+        sql += " ORDER BY t.ticket_price ASC" if sort_by == "price" else " ORDER BY t.match_date ASC"
 
         cursor.execute(sql, tuple(params))
         results = cursor.fetchall()
-
         redis_client.setex(redis_key, 300, json.dumps(jsonable_encoder(results)))
         return results
     finally:

@@ -3,7 +3,7 @@ from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import redis
 import config
-
+from elasticsearch import Elasticsearch
 
 try:
     db_pool = psycopg2.pool.SimpleConnectionPool(
@@ -23,9 +23,16 @@ redis_client = redis.Redis(
     decode_responses=True
 )
 
+es_client = Elasticsearch(config.ES_HOST)
+
 def get_db():
     conn = db_pool.getconn()
     try:
         yield conn
     finally:
         db_pool.putconn(conn)
+
+
+
+
+

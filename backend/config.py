@@ -10,3 +10,5 @@ REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
 JWT_SECRET = os.getenv("JWT_SECRET", "super_secret_key_123")
 JWT_ALGORITHM = "HS256"
+
+ES_HOST = os.getenv("ES_HOST", "http://localhost:9200")
