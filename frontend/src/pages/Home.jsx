@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Calendar, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MapPin, Calendar, Users, ArrowRight } from 'lucide-react';
 import api from '../services/api';
 
 export default function Home() {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ sport: '', city: '', home_team: '' });
+    const navigate = useNavigate();
+
+    useEffect(() => { fetchTickets(); }, []);
 
     const fetchTickets = async () => {
         setLoading(true);
@@ -13,97 +17,55 @@ export default function Home() {
             const queryParams = new URLSearchParams(filters).toString();
             const res = await api.get(`/tickets/search?${queryParams}`);
             setTickets(res.data);
-        } catch (error) {
-            console.error("Error fetching tickets", error);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchTickets();
-    }, []);
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        fetchTickets();
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50 p-8 font-sans">
-            <div className="max-w-6xl mx-auto">
-                <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Find Your Next Game</h1>
+        <div className="pb-24">
+            <section className="py-20 px-6 bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 text-center">
+                <h1 className="text-5xl font-black text-white mb-6">Experience The Game <span className="text-blue-500">Live</span></h1>
+                <p className="text-slate-400 mb-10">Real-time availability and verified seat pricing.</p>
                 
-                {/* Search Filters */}
-                <form onSubmit={handleSearch} className="bg-white p-6 rounded-lg shadow-md flex gap-4 mb-8 flex-wrap justify-center">
-                    <select 
-                        className="border p-3 rounded flex-1 min-w-[200px]"
-                        value={filters.sport} 
-                        onChange={(e) => setFilters({...filters, sport: e.target.value})}
-                    >
+                <form onSubmit={(e) => { e.preventDefault(); fetchTickets(); }} className="bg-slate-900 border border-slate-800 p-2 rounded-2xl max-w-4xl mx-auto flex flex-col md:flex-row gap-2">
+                    <select className="bg-slate-950 border border-slate-800 text-slate-200 px-4 py-3 rounded-xl flex-1 outline-none focus:border-blue-500" value={filters.sport} onChange={e => setFilters({...filters, sport: e.target.value})}>
                         <option value="">All Sports</option>
                         <option value="football">Football</option>
                         <option value="basketball">Basketball</option>
                         <option value="volleyball">Volleyball</option>
                     </select>
-
-                    <input 
-                        type="text" 
-                        placeholder="City (e.g. Tehran, Madrid)" 
-                        className="border p-3 rounded flex-1 min-w-[200px]"
-                        value={filters.city}
-                        onChange={(e) => setFilters({...filters, city: e.target.value})}
-                    />
-                    
-                    <input 
-                        type="text" 
-                        placeholder="Team Name" 
-                        className="border p-3 rounded flex-1 min-w-[200px]"
-                        value={filters.home_team}
-                        onChange={(e) => setFilters({...filters, home_team: e.target.value})}
-                    />
-
-                    <button type="submit" className="bg-blue-600 text-white px-8 py-3 rounded hover:bg-blue-700 flex items-center gap-2">
-                        <Search size={20} /> Search
-                    </button>
+                    <input type="text" placeholder="City..." className="bg-slate-950 border border-slate-800 text-slate-200 px-4 py-3 rounded-xl flex-1 outline-none focus:border-blue-500" value={filters.city} onChange={e => setFilters({...filters, city: e.target.value})} />
+                    <input type="text" placeholder="Team..." className="bg-slate-950 border border-slate-800 text-slate-200 px-4 py-3 rounded-xl flex-1 outline-none focus:border-blue-500" value={filters.home_team} onChange={e => setFilters({...filters, home_team: e.target.value})} />
+                    <button type="submit" className="bg-blue-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-500 flex items-center justify-center gap-2"><Search size={18}/> Search</button>
                 </form>
+            </section>
 
-                {/* Tickets Grid */}
+            <main className="max-w-7xl mx-auto px-6 pt-12">
                 {loading ? (
-                    <p className="text-center text-xl text-gray-500">Loading tickets...</p>
+                    <div className="text-center text-slate-500 py-20">Loading matches...</div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {tickets.map(ticket => (
-                            <div key={ticket.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
-                                <div className="bg-blue-900 p-4 text-white text-center">
-                                    <span className="uppercase text-xs font-bold tracking-widest bg-blue-700 px-2 py-1 rounded">{ticket.sport}</span>
-                                    <h3 className="text-xl font-bold mt-2">{ticket.host_team} <br/><span className="text-gray-400 text-sm">VS</span><br/> {ticket.guest_team}</h3>
+                            <div key={ticket.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition group">
+                                <div className="flex justify-between items-center mb-6">
+                                    <span className="bg-blue-500/10 text-blue-400 text-xs font-bold px-3 py-1 rounded-full uppercase">{ticket.sport}</span>
+                                    <span className="text-slate-400 text-sm flex items-center gap-1"><MapPin size={14}/> {ticket.match_location}</span>
                                 </div>
-                                <div className="p-5">
-                                    <div className="flex items-center gap-3 text-gray-600 mb-3">
-                                        <Calendar size={18} />
-                                        <span>{new Date(ticket.match_date).toLocaleString('en-US')}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-gray-600 mb-3">
-                                        <MapPin size={18} />
-                                        <span>{ticket.venue || 'TBA'} - {ticket.match_location}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-gray-600 mb-6">
-                                        <Users size={18} />
-                                        <span>Capacity: {ticket.remaining_capacity} left</span>
-                                    </div>
-                                    <div className="flex justify-between items-center border-t pt-4">
-                                        <span className="text-2xl font-bold text-gray-900">${ticket.ticket_price}</span>
-                                        <button className="bg-green-500 text-white px-4 py-2 rounded font-medium hover:bg-green-600 transition">
-                                            Book Now
-                                        </button>
-                                    </div>
+                                <h3 className="text-xl font-bold text-white text-center">{ticket.host_team} <span className="text-slate-600 text-sm mx-1">VS</span> {ticket.guest_team}</h3>
+                                <div className="space-y-3 mt-6 text-sm text-slate-400">
+                                    <div className="flex items-center gap-3"><Calendar size={16}/> {new Date(ticket.match_date).toLocaleString()}</div>
+                                    <div className="flex items-center gap-3"><Users size={16}/> {ticket.remaining_capacity} seats left</div>
+                                </div>
+                                <div className="mt-8 flex justify-between items-center border-t border-slate-800 pt-4">
+                                    <span className="text-2xl font-black text-white">${ticket.ticket_price}</span>
+                                    <button onClick={() => navigate(`/tickets/${ticket.id}`)} className="bg-slate-800 text-white px-5 py-2 rounded-xl group-hover:bg-blue-600 transition flex items-center gap-2">Book <ArrowRight size={16}/></button>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }

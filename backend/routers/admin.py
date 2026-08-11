@@ -1,61 +1,115 @@
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from database import get_db
+from typing import Optional
+from database import get_db, es_client
 from utils.security import get_current_user
 import psycopg2.extras
 
-router = APIRouter(prefix="/api/admin", tags=["Admin Panel"])
+router = APIRouter(prefix="/api/admin", tags=["Admin Operations"])
 
-def check_support_role(user: dict = Depends(get_current_user)):
-    if user['role'] != 'support':
-        raise HTTPException(status_code=403, detail="Unauthorized access (backup only)")
-    return user
+class TicketCreateRequest(BaseModel):
+    sport: str
+    host_team: str
+    guest_team: str
+    match_date: str
+    match_location: str
+    ticket_price: float
+    capacity: int
 
+# ۱. دریافت تمام رزروها برای مدیریت
 @router.get("/reservations")
-def admin_get_reservations(status: str = None, user: dict = Depends(check_support_role), conn=Depends(get_db)):
+def get_all_reservations(user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    if user.get("role") != "support":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-        sql = "SELECT  FROM reservations"
-        params = []
-        if status:
-            sql += " WHERE reservation_status = %s"
-            params.append(status)
-        cursor.execute(sql, tuple(params))
+        cursor.execute("""
+            SELECT r.*, t.host_team, t.guest_team, t.sport, t.ticket_price
+            FROM reservations r
+            JOIN tickets t ON r.ticket_id = t.id
+            ORDER BY r.reservation_time DESC
+        """)
         return cursor.fetchall()
     finally:
         cursor.close()
 
+# ۲. تغییر وضعیت رزرو
 @router.put("/reservations/{reservation_id}")
-def admin_update_reservation(reservation_id: int, status: str, user: dict = Depends(check_support_role), conn=Depends(get_db)):
+def update_reservation_status(reservation_id: int, status: str, user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    if user.get("role") != "support":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
     cursor = conn.cursor()
     try:
         cursor.execute("UPDATE reservations SET reservation_status = %s WHERE id = %s", (status, reservation_id))
         conn.commit()
-        return {"message": f"Reservation status changed to {status}"}
+        return {"message": "Status updated successfully"}
     finally:
         cursor.close()
 
+# ۳. ایجاد مسابقه/بلیط جدید
+@router.post("/tickets")
+def create_ticket(req: TicketCreateRequest, user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    if user.get("role") != "support":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    # ---------------------------------------------------------
+    # 🚀 ترفند اجباری: ساخت ستون دقیقاً در همان لحظه توسط پایتون
+    # ---------------------------------------------------------
+    try:
+        cursor.execute("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS capacity INTEGER NOT NULL DEFAULT 100;")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print("Column check bypassed:", e)
+    # ---------------------------------------------------------
+
+    try:
+        # اصلاح فرمت تاریخ
+        formatted_date = req.match_date.replace('T', ' ')
+        if len(formatted_date) == 16:
+            formatted_date += ':00'
+
+        # ثبت اطلاعات در دیتابیس
+        cursor.execute("""
+            INSERT INTO tickets (sport, host_team, guest_team, match_date, match_location, ticket_price, capacity, remaining_capacity)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING *
+        """, (req.sport, req.host_team, req.guest_team, formatted_date, req.match_location, req.ticket_price, req.capacity, req.capacity))
+        
+        new_ticket = cursor.fetchone()
+        conn.commit()
+
+        # ثبت در الستیک‌سرچ
+        try:
+            doc = dict(new_ticket)
+            if hasattr(doc.get('match_date'), 'isoformat'):
+                doc['match_date'] = doc['match_date'].isoformat()
+            doc['ticket_price'] = float(doc['ticket_price'])
+            es_client.index(index="tickets", id=str(doc["id"]), document=doc)
+        except Exception as e:
+            print(f"Failed to index to ES: {e}")
+
+        return {"message": "Ticket created successfully", "ticket": new_ticket}
+    except Exception as e:
+        conn.rollback()
+        print(f"Database Error on Create Ticket: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+
+# ۴. دریافت گزارش‌های کاربران
 @router.get("/reports")
-def admin_get_reports(status: str = None, user: dict = Depends(check_support_role), conn=Depends(get_db)):
+def get_user_reports(user: dict = Depends(get_current_user), conn=Depends(get_db)):
+    if user.get("role") != "support":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-        sql = "SELECT  FROM reports"
-        params = []
-        if status:
-            sql += " WHERE report_status = %s"
-            params.append(status)
-        cursor.execute(sql, tuple(params))
+        cursor.execute("SELECT * FROM reports ORDER BY id DESC")
         return cursor.fetchall()
-    finally:
-        cursor.close()
-
-@router.put("/reports/{report_id}")
-def admin_review_report(report_id: int, user: dict = Depends(check_support_role), conn=Depends(get_db)):
-    cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE reports SET report_status = 'reviewed' WHERE id = %s", (report_id,))
-        conn.commit()
-        return {"message": "The status of the report has changed to review."}
     finally:
         cursor.close()

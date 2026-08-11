@@ -67,4 +67,4 @@ app.include_router(admin.router)
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to the Sports Ticketing API - Phase 3 & 4"}
+    return {"message": "Welcome to the Sports Ticketing "}

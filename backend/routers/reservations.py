@@ -4,6 +4,7 @@ from database import get_db, db_pool
 from utils.security import get_current_user
 import psycopg2.extras
 import time
+import datetime
 
 router = APIRouter(prefix="/api", tags=["Reservations and Payments"])
 
@@ -65,7 +66,6 @@ def create_reservation(req: ReserveRequest, bg_tasks: BackgroundTasks, user: dic
             reservation_ids.append(cursor.fetchone()['id'])
 
         conn.commit()
-
         bg_tasks.add_task(auto_cancel_job, reservation_ids)
 
         return {"message": "Reservation was successful", "reservation_ids": reservation_ids}
@@ -80,10 +80,11 @@ def get_active_reservations(user: dict = Depends(get_current_user), conn=Depends
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         cursor.execute("""
-            SELECT r.*, t.host_team, t.guest_team, t.match_date 
+            SELECT r.*, t.host_team, t.guest_team, t.match_date, t.ticket_price 
             FROM reservations r
             JOIN tickets t ON r.ticket_id = t.id
             WHERE r.user_id = %s AND r.reservation_status = 'reserved'
+            ORDER BY r.reservation_time DESC
         """, (user['id'],))
         return cursor.fetchall()
     finally:
@@ -93,7 +94,13 @@ def get_active_reservations(user: dict = Depends(get_current_user), conn=Depends
 def get_reservations_history(user: dict = Depends(get_current_user), conn=Depends(get_db)):
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-        cursor.execute("SELECT * FROM reservations WHERE user_id = %s ORDER BY reservation_time DESC", (user['id'],))
+        cursor.execute("""
+            SELECT r.*, t.host_team, t.guest_team, t.ticket_price 
+            FROM reservations r
+            JOIN tickets t ON r.ticket_id = t.id
+            WHERE r.user_id = %s 
+            ORDER BY r.reservation_time DESC
+        """, (user['id'],))
         return cursor.fetchall()
     finally:
         cursor.close()
@@ -137,9 +144,7 @@ def calculate_penalty(reservation_id: int, user: dict = Depends(get_current_user
         if not data or data['reservation_status'] != 'paid':
             raise HTTPException(status_code=400, detail="This reservation cannot be canceled.")
 
-        import datetime
         time_diff = data['match_date'] - datetime.datetime.now()
-
         penalty_percent = 20 if time_diff.total_seconds() < 86400 else 0  
         refund_amount = float(data['ticket_price']) * ((100 - penalty_percent) / 100)
 
